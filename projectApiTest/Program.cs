@@ -29,7 +29,9 @@ select * from  sys.databases";
                 {
                     testTableWithPoints(connection),
                     testGetX(connection),
-                    testGetY(connection)
+                    testGetY(connection),
+                    testCalculateDistance(connection),
+                    testCalculateArea(connection)
                 };
 
                 if(testResults.Where(result => result == false).ToArray().Length == 0)
@@ -182,6 +184,89 @@ drop table PointsUnitTest;
             return true;
         }
 
-        //static bool 
+        static bool testCalculateDistance(SqlConnection connection)
+        {
+            Console.WriteLine("start of testCalculateDistance");
+            bool result = true;
+            List<Tuple<string, string, double>> pointsAndDistance = new List<Tuple<string, string, double>>()
+            {
+                new Tuple<string, string, double>("0;0", "0;15", 15),
+                new Tuple<string, string, double>("0;15", "0;0", 15),
+                new Tuple<string, string, double>("-15;0", "0;0", 15),
+                new Tuple<string, string, double>("15;0", "0;15", 15 * Math.Sqrt(2)),
+                new Tuple<string, string, double>("-15;0", "15;0", 30),
+            };
+
+            List<string> lines = pointsAndDistance.Select(tuple => $"('{tuple.Item1}', '{tuple.Item2}')").ToList();
+            for(int i = 0; i < pointsAndDistance.Count; i++)
+            {
+                string stringCommand = $@"
+                use projekttry0;
+                select dbo.calculateDistance{lines[i]} as distance;
+                ";
+                SqlCommand command = new SqlCommand(stringCommand, connection);
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        double expectedDistance = Convert.ToDouble(pointsAndDistance[i].Item3);
+                        double distance = Convert.ToDouble(reader["distance"]);
+                        if (Math.Abs(expectedDistance - distance) > 0.0005)
+                        {
+                            Console.WriteLine($"test failed: {expectedDistance} is not equal to {distance}");
+                            result = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("OK");
+                        }
+                    }
+                    
+                }
+            }
+            if (result) Console.WriteLine("testCalculateDistance unit test passed");
+            return true;
+        }
+
+        static bool testCalculateArea(SqlConnection connection)
+        {
+            Console.WriteLine("start of testCalculateArea");
+            bool result = true;
+            List<Tuple<string, string, string, double>> pointsAndDistance = new List<Tuple<string, string, string, double>>()
+            {
+                new Tuple<string, string, string, double>("0;0", "0;15", "15;0", 15 * 15 /2.0),
+                new Tuple<string, string, string, double>("-15;0", "0;-15", "0;15", 30 * 15.0/2.0),
+            };
+
+            List<string> lines = pointsAndDistance.Select(tuple => $"('{tuple.Item1}', '{tuple.Item2}', '{tuple.Item3}')").ToList();
+            for (int i = 0; i < pointsAndDistance.Count; i++)
+            {
+                string stringCommand = $@"
+                use projekttry0;
+                select dbo.calculateArea{lines[i]} as area;
+                ";
+                SqlCommand command = new SqlCommand(stringCommand, connection);
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        double expectedArea = Convert.ToDouble(pointsAndDistance[i].Item4);
+                        double area = Convert.ToDouble(reader["area"]);
+                        if (Math.Abs(expectedArea - area) > 0.0005)
+                        {
+                            Console.WriteLine($"test failed: {expectedArea} is not equal to {area}");
+                            result = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("OK");
+                        }
+                    }
+
+                }
+            }
+            if (result) Console.WriteLine("testCalculateArea unit test passed");
+            return true;
+        }
     }
 }
