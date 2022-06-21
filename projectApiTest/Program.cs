@@ -13,7 +13,7 @@ namespace projectApiTest
     class Program
     {
         static string connectionString = @"Data Source=.;" +
-               "INITIAL CATALOG=projekttry0;" +
+               "INITIAL CATALOG=DB2Projekt;" +
                "Integrated Security=SSPI";
 
         static string sqlcommand = @"use Lab6db
