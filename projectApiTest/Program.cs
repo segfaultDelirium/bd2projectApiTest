@@ -31,7 +31,9 @@ select * from  sys.databases";
                     testGetX(connection),
                     testGetY(connection),
                     testCalculateDistance(connection),
-                    testCalculateArea(connection)
+                    testCalculateArea(connection),
+                    testIsPointInArea(connection),
+
                 };
 
                 if(testResults.Where(result => result == false).ToArray().Length == 0)
@@ -44,8 +46,8 @@ select * from  sys.databases";
                 }
                 
             }
-
-                Console.ReadKey();
+            Console.WriteLine("enter key to exit");
+            Console.ReadKey();
         }
 
         static bool testTableWithPoints(SqlConnection connection)
@@ -90,7 +92,7 @@ drop table PointsUnitTest;
                 }
             }
             if(result) Console.WriteLine("testTableWithPoints unit test passed");
-            return true;
+            return result;
         }
 
         static bool testGetX(SqlConnection connection)
@@ -266,7 +268,48 @@ drop table PointsUnitTest;
                 }
             }
             if (result) Console.WriteLine("testCalculateArea unit test passed");
-            return true;
+            return result;
+        }
+
+        static bool testIsPointInArea(SqlConnection connection)
+        {
+            Console.WriteLine("start of testIsPointInArea");
+            bool result = true;
+            List<Tuple<string, string, string, string, bool>> pointsAndDistance = new List<Tuple<string, string, string, string, bool>>()
+            {
+                new Tuple<string, string, string, string, bool>("7;7", "0;0", "0;15", "15;0", true),
+                new Tuple<string, string, string, string, bool>("-1;3", "-15;0", "0;-15", "0;15", true),
+                new Tuple<string, string, string, string, bool>("-34;3", "-15;0", "0;-15", "0;15", false),
+            };
+
+            List<string> lines = pointsAndDistance.Select(tuple => $"('{tuple.Item1}', '{tuple.Item2}', '{tuple.Item3}', '{tuple.Item4}')").ToList();
+            for (int i = 0; i < pointsAndDistance.Count; i++)
+            {
+                string stringCommand = $@"
+                use projekttry0;
+                select dbo.isPointInArea{lines[i]} as isPointInArea;
+                ";
+                SqlCommand command = new SqlCommand(stringCommand, connection);
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int expectedIsInArea = pointsAndDistance[i].Item5 ? 1 : 0;
+                        int isInArea = Convert.ToInt32(reader["isPointInArea"]);
+                        if (expectedIsInArea != isInArea)
+                        {
+                            Console.WriteLine($"test failed: {expectedIsInArea} is not equal to {isInArea}");
+                            result = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("OK");
+                        }
+                    }
+                }
+            }
+            if (result) Console.WriteLine("testIsPointInArea unit test passed");
+            return result;
         }
     }
 }
