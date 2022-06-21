@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 
@@ -16,15 +12,11 @@ namespace projectApiTest
                "INITIAL CATALOG=DB2Projekt;" +
                "Integrated Security=SSPI";
 
-        static string sqlcommand = @"use Lab6db
-select * from  sys.databases";
-
         static void Main(string[] args)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                SqlCommand command = new SqlCommand(sqlcommand, connection);
                 List<bool> testResults = new List<bool>()
                 {
                     testTableWithPoints(connection),
@@ -33,7 +25,6 @@ select * from  sys.databases";
                     testCalculateDistance(connection),
                     testCalculateArea(connection),
                     testIsPointInArea(connection),
-
                 };
 
                 if(testResults.Where(result => result == false).ToArray().Length == 0)
@@ -50,6 +41,7 @@ select * from  sys.databases";
             Console.ReadKey();
         }
 
+        // this function tests creating table, inserting Points into that table, reading from table and dropping the table
         static bool testTableWithPoints(SqlConnection connection)
         {
             Console.WriteLine("start of testTableWithPoints");
@@ -95,6 +87,7 @@ drop table PointsUnitTest;
             return result;
         }
 
+        // this function tests Point method getX() which returns the x coordinate of a Point
         static bool testGetX(SqlConnection connection)
         {
             Console.WriteLine("start of testGetX");
@@ -116,7 +109,6 @@ drop table PointsUnitTest;
 
                 drop table PointsUnitTest;
                 ";
-            //Console.WriteLine(stringCommand);
             SqlCommand command = new SqlCommand(stringCommand, connection);
             using (SqlDataReader reader = command.ExecuteReader())
             {
@@ -138,8 +130,10 @@ drop table PointsUnitTest;
                 }
             }
             if (result) Console.WriteLine("testGetX unit test passed");
-            return true;
+            return result;
         }
+
+        // this function tests Point method getY() which returns the y coordinate of a Point
         static bool testGetY(SqlConnection connection)
         {
             Console.WriteLine("start of testGetY");
@@ -161,7 +155,6 @@ drop table PointsUnitTest;
 
                 drop table PointsUnitTest;
                 ";
-            //Console.WriteLine(stringCommand);
             SqlCommand command = new SqlCommand(stringCommand, connection);
             using (SqlDataReader reader = command.ExecuteReader())
             {
@@ -183,9 +176,11 @@ drop table PointsUnitTest;
                 }
             }
             if (result) Console.WriteLine("testGetY unit test passed");
-            return true;
+            return result;
         }
 
+        // this function tests user defined function calculateDistance(Point, Point),
+        // which calculates distance between the two Points
         static bool testCalculateDistance(SqlConnection connection)
         {
             Console.WriteLine("start of testCalculateDistance");
@@ -222,14 +217,15 @@ drop table PointsUnitTest;
                         {
                             Console.WriteLine("OK");
                         }
-                    }
-                    
+                    }   
                 }
             }
             if (result) Console.WriteLine("testCalculateDistance unit test passed");
             return true;
         }
 
+        // this function tests user defined function calculateArea(Point, Point, Point),
+        // which calculates area of triangle spanned by the three points 
         static bool testCalculateArea(SqlConnection connection)
         {
             Console.WriteLine("start of testCalculateArea");
@@ -271,19 +267,22 @@ drop table PointsUnitTest;
             return result;
         }
 
+        // this function tests user defined function isPointInArea(Point, Point, Point, Point),
+        // which calculates whether first Point passed to the function is inside 
+        // the triangle spanned by the last 3 Points passed to the function.
         static bool testIsPointInArea(SqlConnection connection)
         {
             Console.WriteLine("start of testIsPointInArea");
             bool result = true;
-            List<Tuple<string, string, string, string, bool>> pointsAndDistance = new List<Tuple<string, string, string, string, bool>>()
+            List<Tuple<string, string, string, string, bool>> isPointInAreaList= new List<Tuple<string, string, string, string, bool>>()
             {
                 new Tuple<string, string, string, string, bool>("7;7", "0;0", "0;15", "15;0", true),
                 new Tuple<string, string, string, string, bool>("-1;3", "-15;0", "0;-15", "0;15", true),
                 new Tuple<string, string, string, string, bool>("-34;3", "-15;0", "0;-15", "0;15", false),
             };
 
-            List<string> lines = pointsAndDistance.Select(tuple => $"('{tuple.Item1}', '{tuple.Item2}', '{tuple.Item3}', '{tuple.Item4}')").ToList();
-            for (int i = 0; i < pointsAndDistance.Count; i++)
+            List<string> lines = isPointInAreaList.Select(tuple => $"('{tuple.Item1}', '{tuple.Item2}', '{tuple.Item3}', '{tuple.Item4}')").ToList();
+            for (int i = 0; i < isPointInAreaList.Count; i++)
             {
                 string stringCommand = $@"
                 use projekttry0;
@@ -294,7 +293,7 @@ drop table PointsUnitTest;
                 {
                     while (reader.Read())
                     {
-                        int expectedIsInArea = pointsAndDistance[i].Item5 ? 1 : 0;
+                        int expectedIsInArea = isPointInAreaList[i].Item5 ? 1 : 0;
                         int isInArea = Convert.ToInt32(reader["isPointInArea"]);
                         if (expectedIsInArea != isInArea)
                         {
